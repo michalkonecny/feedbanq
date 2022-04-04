@@ -14,6 +14,7 @@ import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
+import Effect.Console (log)
 import Halogen (PropName(..), liftEffect)
 import Halogen as H
 import Halogen.Aff as HA
@@ -198,14 +199,18 @@ component =
     --   handleAction $ DeselectItem itemId
 
     DeleteAllItems -> do
-      H.modify_ $ \ s -> initialState { m_backup = Just {items: s.items, items_order: s.items_order} }
+      H.modify_ $ \ s -> 
+        initialState 
+          { m_storage = s.m_storage, m_backup = Just {items: s.items, items_order: s.items_order} }
+      updateLocalStorage
 
     Undo -> do
-      {m_backup} <- H.get
+      {m_backup, m_storage} <- H.get
       case m_backup of
         Nothing -> pure unit
-        Just {items, items_order} ->
-          H.modify_ $ \ _ -> initialState { items = items, items_order = items_order }
+        Just {items, items_order} -> do
+          H.modify_ $ \ _ -> initialState { m_storage = m_storage, items = items, items_order = items_order }
+          updateLocalStorage
 
     UpdateItem itemId itemText -> do
       H.modify_ $ \ s-> s { items = updateItem s.items }
@@ -265,12 +270,13 @@ component =
 
   updateLocalStorage = do
     {m_storage, items, items_order} <- H.get
+    let jsonS = stringify $ encodeJson {items, items_order}
     case m_storage of
       Nothing -> pure unit
       Just s -> 
-        liftEffect $ 
-          Storage.setItem "items" 
-            (stringify $ encodeJson {items, items_order}) s
+        liftEffect $ do
+          log $ "updateLocalStorage: jsonS = " <> jsonS
+          Storage.setItem "items" jsonS s
 
   readLocalStorage = do
     {m_storage} <- H.get
