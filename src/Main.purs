@@ -92,6 +92,7 @@ component =
   where
   render {items, items_order, selectedItems, m_movingItemIx, m_backup} = 
     HH.div_ [
+      HH.a [HP.href "https://github.com/michalkonecny/feedbanq"] [HH.text "source code on GitHub"],
       HH.table_ $
         [
           HH.tr_ [ HH.th_ [HH.text $ "Item"]]
