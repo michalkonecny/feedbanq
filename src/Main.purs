@@ -8,7 +8,6 @@ import Data.Either (hush)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
-import Data.Set as Set
 import Data.String as String
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -32,8 +31,14 @@ main = do
 
 type State = {
   items :: Map ItemId String
+, items_order :: Array ItemId
 , selectedItems :: Map ItemId String
 , m_storage :: Maybe Storage
+}
+
+type StoredState = {
+  items :: Map ItemId String
+, items_order :: Array ItemId
 }
 
 type ItemId = Int
@@ -41,6 +46,7 @@ type ItemId = Int
 initialState :: State
 initialState = {
   items: Map.empty
+, items_order: []
 , selectedItems: Map.empty
 , m_storage: Nothing
 }
@@ -66,19 +72,19 @@ component =
       -- { handleAction = handleAction }
     }
   where
-  render {items, selectedItems} = 
+  render {items, items_order, selectedItems} = 
     HH.div_ [
       HH.table_ $
         [
           HH.tr_ [ HH.th_ [HH.text $ "Item"]]
         ]
-        <> map itemRow (Set.toUnfoldable $ Map.keys items),
+        <> map itemRow items_order,
       addButton,
       HH.table_ $
         [
           HH.tr_ [ HH.th_ [HH.text $ "Selected"] ]
         ]
-        <> map selectedRow (Set.toUnfoldable $ Map.keys items),
+        <> map selectedRow items_order,
       result
     ]
     where
@@ -87,7 +93,11 @@ component =
       , HP.prop (PropName "size") "100"
       ]
       where
-      text = String.joinWith "<br/>" (Array.fromFoldable $ Map.values selectedItems)
+      text = String.joinWith "<br/>" selectedItemsTexts
+      selectedItemsTexts = Array.catMaybes $ map pickSelected items_order
+        where
+        pickSelected = flip Map.lookup selectedItems
+
     addButton = 
       HH.button [HP.title "new", HE.onClick \ _ -> AddItem ] [HH.text "new"]
     -- deleteButton itemId = 
@@ -133,15 +143,17 @@ component =
     Init -> do
       -- get hold of this window's local storage:
       storage <- liftEffect $ window >>= localStorage
-      items <- readLocalStorage {storage, default: Map.empty}
-      H.modify_ $ _ { m_storage = Just storage, items = items }
+      H.modify_ $ _ { m_storage = Just storage }
+      readLocalStorage
 
     AddItem -> do
-      H.modify_ $ \ s-> s { items = addItem s.items }
+      H.modify_ addItem
       updateLocalStorage
       where
-      addItem items = Map.insert newItemId ("item " <> (show newItemId)) items
+      addItem s@{ items, items_order } = s { items = items', items_order = items_order' }
         where
+        items_order' = [newItemId] <> items_order
+        items' = Map.insert newItemId ("item " <> (show newItemId)) items
         newItemId = 1 + (maybe 0 identity $ map _.key $ Map.findMax items)
 
     DeleteItem itemId -> do
@@ -172,20 +184,30 @@ component =
       H.modify_ $ \ s-> s { selectedItems = Map.delete itemId s.selectedItems }
 
   updateLocalStorage = do
-      {m_storage, items} <- H.get
-      case m_storage of
-        Nothing -> pure unit
-        Just s -> liftEffect $ Storage.setItem "items" (stringify $ encodeJson items) s
+    {m_storage, items, items_order} <- H.get
+    case m_storage of
+      Nothing -> pure unit
+      Just s -> 
+        liftEffect $ 
+          Storage.setItem "items" 
+            (stringify $ encodeJson {items, items_order}) s
 
-  readLocalStorage {storage, default} = do
-    -- attempt to get history from local storage:
-    m_itemsS <- liftEffect $ Storage.getItem "items" storage
-    let m_items = parseItems m_itemsS
-    pure $ maybe default identity m_items
-    where
-    parseItems m_itemsS = do
-      itemsS <- m_itemsS
-      json   <- hush $ parseJson itemsS
-      items  <- hush $ decodeJson json
-      pure items
+  readLocalStorage = do
+    {m_storage} <- H.get
+    case m_storage of
+      Nothing -> pure unit
+      Just storage -> do
+        -- attempt to get history from local storage:
+        m_itemsS <- liftEffect $ Storage.getItem "items" storage
+        let m_items = parseItems m_itemsS
+        case m_items of
+          Nothing -> pure unit
+          Just {items: items', items_order: items_order'} ->
+            H.modify_ $ _ { items = items', items_order = items_order' }
+        where
+        parseItems :: Maybe String -> Maybe StoredState
+        parseItems m_itemsS = do
+          itemsS <- m_itemsS
+          json   <- hush $ parseJson itemsS
+          hush $ decodeJson json
 
