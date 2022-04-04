@@ -67,15 +67,20 @@ component =
     }
   where
   render {items, selectedItems} = 
-    HH.table_ $
-      [
-        HH.tr_ [ HH.th_ [HH.text $ "Item"] ,  HH.th_ [HH.text $ "Selected"] ]
-      ]
-      <> map itemRow (Set.toUnfoldable $ Map.keys items)
-      <>
-      [
-        HH.tr_ [ HH.td_ [addButton], HH.td_ [result] ]
-      ]
+    HH.div_ [
+      HH.table_ $
+        [
+          HH.tr_ [ HH.th_ [HH.text $ "Item"]]
+        ]
+        <> map itemRow (Set.toUnfoldable $ Map.keys items),
+      addButton,
+      HH.table_ $
+        [
+          HH.tr_ [ HH.th_ [HH.text $ "Selected"] ]
+        ]
+        <> map selectedRow (Set.toUnfoldable $ Map.keys items),
+      result
+    ]
     where
     result = HH.textarea 
       [ HP.value text
@@ -85,12 +90,12 @@ component =
       text = String.joinWith "<br/>" (Array.fromFoldable $ Map.values selectedItems)
     addButton = 
       HH.button [HP.title "new", HE.onClick \ _ -> AddItem ] [HH.text "new"]
-    deleteButton itemId = 
-      HH.button [HP.title "delete", HE.onClick \ _ -> DeleteItem itemId ] [HH.text "X"]
+    -- deleteButton itemId = 
+    --   HH.button [HP.title "delete", HE.onClick \ _ -> DeleteItem itemId ] [HH.text "X"]
     selectButton itemId = 
       HH.button [HP.title "select", HE.onClick \ _ -> SelectItem itemId ] [HH.text "select"]
     deselectButton itemId = 
-      HH.button [HP.title "deselect", HE.onClick \ _ -> DeselectItem itemId ] [HH.text "X"]
+      HH.button [HP.title "deselect", HE.onClick \ _ -> DeselectItem itemId ] [HH.text "desel."]
     itemInput text action =
       HH.input 
         [ HP.prop (PropName "size") "100"
@@ -100,15 +105,25 @@ component =
     itemRow itemId = 
       HH.tr_ 
         [ 
-          HH.td_ [ deleteButton itemId, itemInput itemText (UpdateItem itemId) ]
-        , HH.td_ selectedItemControls
+          -- HH.td_ [ deleteButton itemId, itemInput itemText (UpdateItem itemId) ]
+          HH.td_ [ itemInput itemText (UpdateItem itemId), selectToggleButton ]
         ]
         where
         itemText = 
           maybe "" identity $ Map.lookup itemId items
+        selectToggleButton =
+           case Map.lookup itemId selectedItems of
+              Nothing -> selectButton itemId
+              Just _ -> deselectButton itemId
+    selectedRow itemId = 
+      HH.tr_ 
+        [ 
+          HH.td_ selectedItemControls
+        ]
+        where
         selectedItemControls =
            case Map.lookup itemId selectedItems of
-              Nothing -> [ selectButton itemId ]
+              Nothing -> [ ]
               Just selectedItemText -> 
                 [ itemInput selectedItemText (UpdateSelected itemId)
                 , deselectButton itemId
