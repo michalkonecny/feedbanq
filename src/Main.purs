@@ -41,6 +41,7 @@ main = do
 type State = {
   items :: Map ItemId String
 , items_order :: Array ItemId
+, m_backup :: Maybe StoredState
 , selectedItems :: Map ItemId String
 , m_storage :: Maybe Storage
 , m_movingItemIx :: Maybe Int
@@ -57,6 +58,7 @@ initialState :: State
 initialState = {
   items: Map.empty
 , items_order: []
+, m_backup: Nothing
 , selectedItems: Map.empty
 , m_storage: Nothing
 , m_movingItemIx: Nothing
@@ -70,7 +72,7 @@ data Action
   | ProcessKey SubscriptionId String
   | UpdateItem ItemId String
   | DeleteAllItems
-  -- | Undo
+  | Undo
   | SelectItem ItemId
   | DeselectItem ItemId
   | UpdateSelected ItemId String
@@ -87,7 +89,7 @@ component =
       -- { handleAction = handleAction }
     }
   where
-  render {items, items_order, selectedItems, m_movingItemIx} = 
+  render {items, items_order, selectedItems, m_movingItemIx, m_backup} = 
     HH.div_ [
       HH.table_ $
         [
@@ -95,7 +97,7 @@ component =
         ]
         <> map itemRow (Array.zip (0..(numberOfItems-1)) items_order),
       addButton, 
-      clearButton,
+      clearOrUndoButton,
       HH.table_ $
         [
           HH.tr_ [ HH.th_ [HH.text $ "Selected"] ]
@@ -121,6 +123,13 @@ component =
     --   HH.button [HP.title "delete", HE.onClick \ _ -> DeleteItem itemId ] [HH.text "X"]
     clearButton = 
       HH.button [HP.title "CLEAR", HE.onClick \ _ -> DeleteAllItems ] [HH.text "CLEAR"]
+    undoButton = 
+      HH.button [HP.title "UNDO", HE.onClick \ _ -> Undo ] [HH.text "UNDO"]
+    clearOrUndoButton =
+      case m_backup of
+        Nothing -> clearButton
+        Just _ -> undoButton
+
     moveButton itemIx = 
       HH.button [HP.title "↕", HE.onClick \ _ -> StartMovingItem itemIx ] [HH.text "↕"]
     selectButton itemId = 
@@ -177,7 +186,7 @@ component =
       H.modify_ addItem
       updateLocalStorage
       where
-      addItem s@{ items, items_order } = s { items = items', items_order = items_order' }
+      addItem s@{ items, items_order } = s { items = items', items_order = items_order', m_backup = Nothing }
         where
         items_order' = items_order <> [newItemId]
         items' = Map.insert newItemId ("item " <> (show newItemId)) items
@@ -187,8 +196,16 @@ component =
     --   H.modify_ $ \ s-> s { items = Map.delete itemId s.items }
     --   updateLocalStorage
     --   handleAction $ DeselectItem itemId
+
     DeleteAllItems -> do
-      H.modify_ $ \ s -> initialState
+      H.modify_ $ \ s -> initialState { m_backup = Just {items: s.items, items_order: s.items_order} }
+
+    Undo -> do
+      {m_backup} <- H.get
+      case m_backup of
+        Nothing -> pure unit
+        Just {items, items_order} ->
+          H.modify_ $ \ _ -> initialState { items = items, items_order = items_order }
 
     UpdateItem itemId itemText -> do
       H.modify_ $ \ s-> s { items = updateItem s.items }
