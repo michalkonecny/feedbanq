@@ -100,12 +100,16 @@ component =
         <> map itemRow (Array.zip (0..(numberOfItems-1)) items_order),
       addButton, 
       clearOrUndoButton,
-      HH.table_ $
-        [
-          HH.tr_ [ HH.th_ [HH.text $ "Selected"] ]
+      if Map.isEmpty selectedItems then HH.text ""
+      else
+        HH.div_ [
+          HH.table_ $
+            [
+              HH.tr_ [ HH.th_ [HH.text $ "Selected (reload tab to clear)"] ]
+            ]
+            <> map selectedRow items_order,
+          result
         ]
-        <> map selectedRow items_order,
-      result
     ]
     where
     numberOfItems = Array.length items_order
