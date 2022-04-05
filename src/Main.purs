@@ -100,18 +100,32 @@ component =
         <> map itemRow (Array.zip (0..(numberOfItems-1)) items_order),
       addButton, 
       clearOrUndoButton,
-      if Map.isEmpty selectedItems then HH.text ""
-      else
+      selectionView,
+      importExportView
+    ]
+    where
+    selectionView
+      | Map.isEmpty selectedItems = HH.div_ []
+      | otherwise =
         HH.div_ [
           HH.table_ $
             [
               HH.tr_ [ HH.th_ [HH.text $ "Selected (reload tab to clear)"] ]
             ]
             <> map selectedRow items_order,
+          HH.text "HTML feedback: ",
           result
         ]
-    ]
-    where
+
+    importExportView = 
+      HH.div_ [
+        HH.text "Export all feedback items as JSON: ",
+        HH.textarea 
+          [ HP.value json ]
+      ]
+      where
+      json = stringify $ encodeJson {items, items_order}
+
     numberOfItems = Array.length items_order
     result = HH.textarea 
       [ HP.value text
