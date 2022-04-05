@@ -72,6 +72,7 @@ data Action
   | StartMovingItem ItemId
   | ProcessKey SubscriptionId String
   | UpdateItem ItemId String
+  | DeleteItem ItemId
   | DeleteAllItems
   | Undo
   | SelectItem ItemId
@@ -142,8 +143,8 @@ component =
 
     addButton = 
       HH.button [HP.title "new", HE.onClick \ _ -> AddItem ] [HH.text "new"]
-    -- deleteButton itemId = 
-    --   HH.button [HP.title "delete", HE.onClick \ _ -> DeleteItem itemId ] [HH.text "X"]
+    deleteButton itemId = 
+      HH.button [HP.title "delete", HE.onClick \ _ -> DeleteItem itemId ] [HH.text "delete"]
     clearButton = 
       HH.button [HP.title "CLEAR", HE.onClick \ _ -> DeleteAllItems ] [HH.text "CLEAR"]
     undoButton = 
@@ -169,7 +170,12 @@ component =
       HH.tr_ 
         [ 
           -- HH.td_ [ deleteButton itemId, itemInput itemText (UpdateItem itemId) ]
-          HH.td_ [ moveControl, itemInput itemText (UpdateItem itemId), selectToggleButton ]
+          HH.td_ [
+              moveControl, 
+              itemInput itemText (UpdateItem itemId), 
+              selectToggleButton,
+              deleteButton itemId
+            ]
         ]
         where
         itemText = 
@@ -215,10 +221,12 @@ component =
         items' = Map.insert newItemId ("item " <> (show newItemId)) items
         newItemId = 1 + (maybe 0 identity $ map _.key $ Map.findMax items)
 
-    -- DeleteItem itemId -> do
-    --   H.modify_ $ \ s-> s { items = Map.delete itemId s.items }
-    --   updateLocalStorage
-    --   handleAction $ DeselectItem itemId
+    DeleteItem itemId -> do
+      handleAction $ DeselectItem itemId
+      H.modify_ $ \ s-> s 
+        { items       =   Map.delete itemId s.items
+        , items_order = Array.delete itemId s.items_order }
+      updateLocalStorage
 
     DeleteAllItems -> do
       H.modify_ $ \ s -> 

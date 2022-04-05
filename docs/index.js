@@ -4104,6 +4104,10 @@ var PS = {};
   var eqInt = {
       eq: $foreign.eqIntImpl
   };
+  var eq = function (dict) {
+      return dict.eq;
+  };
+  exports["eq"] = eq;
   exports["eqInt"] = eqInt;
   exports["eqString"] = eqString;
 })(PS);
@@ -5790,6 +5794,7 @@ var PS = {};
   var $foreign = $PS["Data.Array"];
   var Control_Bind = $PS["Control.Bind"];
   var Control_Category = $PS["Control.Category"];
+  var Data_Eq = $PS["Data.Eq"];
   var Data_Function = $PS["Data.Function"];
   var Data_Maybe = $PS["Data.Maybe"];
   var Data_Tuple = $PS["Data.Tuple"];
@@ -5813,6 +5818,9 @@ var PS = {};
           };
       };
   };
+  var $$delete = function (dictEq) {
+      return deleteBy(Data_Eq.eq(dictEq));
+  };
   var concatMap = Data_Function.flip(Control_Bind.bind(Control_Bind.bindArray));
   var mapMaybe = function (f) {
       return concatMap((function () {
@@ -5826,6 +5834,7 @@ var PS = {};
   exports["index"] = index;
   exports["updateAt"] = updateAt;
   exports["catMaybes"] = catMaybes;
+  exports["delete"] = $$delete;
   exports["deleteBy"] = deleteBy;
   exports["zip"] = zip;
   exports["range"] = $foreign.range;
@@ -9225,6 +9234,7 @@ var PS = {};
   var Data_Array = $PS["Data.Array"];
   var Data_Boolean = $PS["Data.Boolean"];
   var Data_Either = $PS["Data.Either"];
+  var Data_Eq = $PS["Data.Eq"];
   var Data_Function = $PS["Data.Function"];
   var Data_Functor = $PS["Data.Functor"];
   var Data_Map_Internal = $PS["Data.Map.Internal"];
@@ -9301,6 +9311,15 @@ var PS = {};
       };
       return UpdateItem;
   })();
+  var DeleteItem = (function () {
+      function DeleteItem(value0) {
+          this.value0 = value0;
+      };
+      DeleteItem.create = function (value0) {
+          return new DeleteItem(value0);
+      };
+      return DeleteItem;
+  })();
   var DeleteAllItems = (function () {
       function DeleteAllItems() {
 
@@ -9364,9 +9383,9 @@ var PS = {};
           return Control_Bind.bind(Halogen_Query_HalogenM.bindHalogenM)(Effect_Class.liftEffect(Halogen_Query_HalogenM.monadEffectHalogenM(dictMonadAff.MonadEffect0()))(Control_Bind.bindFlipped(Effect.bindEffect)(Web_HTML_Window.document)(Web_HTML.window)))(function (document) {
               return Halogen_Query_HalogenM["subscribe'"](function (sid) {
                   return Halogen_Query_Event.eventListener(Web_UIEvent_KeyboardEvent_EventTypes.keydown)(Web_HTML_HTMLDocument.toEventTarget(document))((function () {
-                      var $135 = Data_Functor.map(Data_Maybe.functorMaybe)(keyHandler(sid));
-                      return function ($136) {
-                          return $135(Web_UIEvent_KeyboardEvent.fromEvent($136));
+                      var $141 = Data_Functor.map(Data_Maybe.functorMaybe)(keyHandler(sid));
+                      return function ($142) {
+                          return $141(Web_UIEvent_KeyboardEvent.fromEvent($142));
                       };
                   })());
               });
@@ -9404,7 +9423,7 @@ var PS = {};
                   return Web_Storage_Storage.setItem("items")(jsonS)(v.m_storage.value0)();
               });
           };
-          throw new Error("Failed pattern match at Main (line 298, column 5 - line 303, column 42): " + [ v.m_storage.constructor.name ]);
+          throw new Error("Failed pattern match at Main (line 306, column 5 - line 311, column 42): " + [ v.m_storage.constructor.name ]);
       });
       var render = function (v) {
           var undoButton = Halogen_HTML_Elements.button([ Halogen_HTML_Properties.title("UNDO"), Halogen_HTML_Events.onClick(function (v1) {
@@ -9453,12 +9472,39 @@ var PS = {};
                   }));
                   return Halogen_HTML_Elements.div_([ Halogen_HTML_Core.text("Export/import all feedback items as JSON: "), Halogen_HTML_Elements.textarea([ Halogen_HTML_Properties.value(json), Halogen_HTML_Events.onValueInput(ImportItemsJSONString.create) ]) ]);
               };
-              throw new Error("Failed pattern match at Main (line 121, column 5 - line 130, column 59): " + [  ]);
+              throw new Error("Failed pattern match at Main (line 122, column 5 - line 131, column 59): " + [  ]);
           })();
           var deselectButton = function (itemId) {
               return Halogen_HTML_Elements.button([ Halogen_HTML_Properties.title("deselect"), Halogen_HTML_Events.onClick(function (v1) {
                   return new DeselectItem(itemId);
               }) ])([ Halogen_HTML_Core.text("desel.") ]);
+          };
+          var selectedRow = function (itemId) {
+              var selectedItemControls = (function () {
+                  var v1 = Data_Map_Internal.lookup(Data_Ord.ordInt)(itemId)(v.selectedItems);
+                  if (v1 instanceof Data_Maybe.Nothing) {
+                      return [  ];
+                  };
+                  if (v1 instanceof Data_Maybe.Just) {
+                      return [ itemInput(v1.value0)(UpdateSelected.create(itemId)), deselectButton(itemId) ];
+                  };
+                  throw new Error("Failed pattern match at Main (line 200, column 12 - line 205, column 18): " + [ v1.constructor.name ]);
+              })();
+              return Halogen_HTML_Elements.tr_([ Halogen_HTML_Elements.td_(selectedItemControls) ]);
+          };
+          var selectionView = (function () {
+              if (Data_Map_Internal.isEmpty(v.selectedItems)) {
+                  return Halogen_HTML_Elements.div_([  ]);
+              };
+              if (Data_Boolean.otherwise) {
+                  return Halogen_HTML_Elements.div_([ Halogen_HTML_Elements.table_(Data_Semigroup.append(Data_Semigroup.semigroupArray)([ Halogen_HTML_Elements.tr_([ Halogen_HTML_Elements.th_([ Halogen_HTML_Core.text("Selected (reload tab to clear)") ]) ]) ])(Data_Functor.map(Data_Functor.functorArray)(selectedRow)(v.items_order))), Halogen_HTML_Core.text("HTML feedback: "), result ]);
+              };
+              throw new Error("Failed pattern match at Main (line 109, column 5 - line 120, column 10): " + [  ]);
+          })();
+          var deleteButton = function (itemId) {
+              return Halogen_HTML_Elements.button([ Halogen_HTML_Properties.title("delete"), Halogen_HTML_Events.onClick(function (v1) {
+                  return new DeleteItem(itemId);
+              }) ])([ Halogen_HTML_Core.text("delete") ]);
           };
           var itemRow = function (v1) {
               var selectToggleButton = (function () {
@@ -9469,7 +9515,7 @@ var PS = {};
                   if (v2 instanceof Data_Maybe.Just) {
                       return deselectButton(v1.value1);
                   };
-                  throw new Error("Failed pattern match at Main (line 178, column 12 - line 180, column 46): " + [ v2.constructor.name ]);
+                  throw new Error("Failed pattern match at Main (line 184, column 12 - line 186, column 46): " + [ v2.constructor.name ]);
               })();
               var moveControl = (function () {
                   if (v.m_movingItemIx instanceof Data_Maybe.Nothing) {
@@ -9483,37 +9529,12 @@ var PS = {};
                           return Halogen_HTML_Core.text("");
                       };
                   };
-                  throw new Error("Failed pattern match at Main (line 182, column 11 - line 186, column 40): " + [ v.m_movingItemIx.constructor.name ]);
+                  throw new Error("Failed pattern match at Main (line 188, column 11 - line 192, column 40): " + [ v.m_movingItemIx.constructor.name ]);
               })();
               var itemText = Data_Maybe.maybe("")(Control_Category.identity(Control_Category.categoryFn))(Data_Map_Internal.lookup(Data_Ord.ordInt)(v1.value1)(v.items));
-              return Halogen_HTML_Elements.tr_([ Halogen_HTML_Elements.td_([ moveControl, itemInput(itemText)(UpdateItem.create(v1.value1)), selectToggleButton ]) ]);
+              return Halogen_HTML_Elements.tr_([ Halogen_HTML_Elements.td_([ moveControl, itemInput(itemText)(UpdateItem.create(v1.value1)), selectToggleButton, deleteButton(v1.value1) ]) ]);
           };
-          var selectedRow = function (itemId) {
-              var selectedItemControls = (function () {
-                  var v1 = Data_Map_Internal.lookup(Data_Ord.ordInt)(itemId)(v.selectedItems);
-                  if (v1 instanceof Data_Maybe.Nothing) {
-                      return [  ];
-                  };
-                  if (v1 instanceof Data_Maybe.Just) {
-                      return [ itemInput(v1.value0)(UpdateSelected.create(itemId)), deselectButton(itemId) ];
-                  };
-                  throw new Error("Failed pattern match at Main (line 194, column 12 - line 199, column 18): " + [ v1.constructor.name ]);
-              })();
-              return Halogen_HTML_Elements.tr_([ Halogen_HTML_Elements.td_(selectedItemControls) ]);
-          };
-          var selectionView = (function () {
-              if (Data_Map_Internal.isEmpty(v.selectedItems)) {
-                  return Halogen_HTML_Elements.div_([  ]);
-              };
-              if (Data_Boolean.otherwise) {
-                  return Halogen_HTML_Elements.div_([ Halogen_HTML_Elements.table_(Data_Semigroup.append(Data_Semigroup.semigroupArray)([ Halogen_HTML_Elements.tr_([ Halogen_HTML_Elements.th_([ Halogen_HTML_Core.text("Selected (reload tab to clear)") ]) ]) ])(Data_Functor.map(Data_Functor.functorArray)(selectedRow)(v.items_order))), Halogen_HTML_Core.text("HTML feedback: "), result ]);
-              };
-              throw new Error("Failed pattern match at Main (line 108, column 5 - line 119, column 10): " + [  ]);
-          })();
-        
-          // deleteButton itemId = 
-          //   HH.button [HP.title "delete", HE.onClick \ _ -> DeleteItem itemId ] [HH.text "X"]
-  var clearButton = Halogen_HTML_Elements.button([ Halogen_HTML_Properties.title("CLEAR"), Halogen_HTML_Events.onClick(function (v1) {
+          var clearButton = Halogen_HTML_Elements.button([ Halogen_HTML_Properties.title("CLEAR"), Halogen_HTML_Events.onClick(function (v1) {
               return DeleteAllItems.value;
           }) ])([ Halogen_HTML_Core.text("CLEAR") ]);
           var clearOrUndoButton = (function () {
@@ -9523,7 +9544,7 @@ var PS = {};
               if (v.m_backup instanceof Data_Maybe.Just) {
                   return undoButton;
               };
-              throw new Error("Failed pattern match at Main (line 152, column 7 - line 154, column 29): " + [ v.m_backup.constructor.name ]);
+              throw new Error("Failed pattern match at Main (line 153, column 7 - line 155, column 29): " + [ v.m_backup.constructor.name ]);
           })();
           var addButton = Halogen_HTML_Elements.button([ Halogen_HTML_Properties.title("new"), Halogen_HTML_Events.onClick(function (v1) {
               return AddItem.value;
@@ -9552,18 +9573,18 @@ var PS = {};
           };
           if (m_items instanceof Data_Maybe.Just) {
               return Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (v) {
-                  var $61 = {};
-                  for (var $62 in v) {
-                      if ({}.hasOwnProperty.call(v, $62)) {
-                          $61[$62] = v[$62];
+                  var $63 = {};
+                  for (var $64 in v) {
+                      if ({}.hasOwnProperty.call(v, $64)) {
+                          $63[$64] = v[$64];
                       };
                   };
-                  $61.items = m_items.value0.items;
-                  $61.items_order = m_items.value0.items_order;
-                  return $61;
+                  $63.items = m_items.value0.items;
+                  $63.items_order = m_items.value0.items_order;
+                  return $63;
               });
           };
-          throw new Error("Failed pattern match at Main (line 316, column 5 - line 319, column 69): " + [ m_items.constructor.name ]);
+          throw new Error("Failed pattern match at Main (line 324, column 5 - line 327, column 69): " + [ m_items.constructor.name ]);
       };
       var readLocalStorage = Control_Bind.bind(Halogen_Query_HalogenM.bindHalogenM)(Control_Monad_State_Class.get(Halogen_Query_HalogenM.monadStateHalogenM))(function (v) {
           if (v.m_storage instanceof Data_Maybe.Nothing) {
@@ -9574,20 +9595,20 @@ var PS = {};
                   return readItemsFromJSONString(jsonS);
               });
           };
-          throw new Error("Failed pattern match at Main (line 307, column 5 - line 312, column 38): " + [ v.m_storage.constructor.name ]);
+          throw new Error("Failed pattern match at Main (line 315, column 5 - line 320, column 38): " + [ v.m_storage.constructor.name ]);
       });
       var handleAction = function (v) {
           if (v instanceof Init) {
               return Control_Bind.bind(Halogen_Query_HalogenM.bindHalogenM)(Effect_Class.liftEffect(Halogen_Query_HalogenM.monadEffectHalogenM(Effect_Aff.monadEffectAff))(Control_Bind.bind(Effect.bindEffect)(Web_HTML.window)(Web_HTML_Window.localStorage)))(function (storage) {
                   return Control_Bind.discard(Control_Bind.discardUnit)(Halogen_Query_HalogenM.bindHalogenM)(Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (v1) {
-                      var $72 = {};
-                      for (var $73 in v1) {
-                          if ({}.hasOwnProperty.call(v1, $73)) {
-                              $72[$73] = v1[$73];
+                      var $74 = {};
+                      for (var $75 in v1) {
+                          if ({}.hasOwnProperty.call(v1, $75)) {
+                              $74[$75] = v1[$75];
                           };
                       };
-                      $72.m_storage = new Data_Maybe.Just(storage);
-                      return $72;
+                      $74.m_storage = new Data_Maybe.Just(storage);
+                      return $74;
                   }))(function () {
                       return readLocalStorage;
                   });
@@ -9600,19 +9621,36 @@ var PS = {};
                   })(Data_Map_Internal.findMax(v1.items))) | 0;
                   var items_order$prime = Data_Semigroup.append(Data_Semigroup.semigroupArray)(v1.items_order)([ newItemId ]);
                   var items$prime = Data_Map_Internal.insert(Data_Ord.ordInt)(newItemId)("item " + Data_Show.show(Data_Show.showInt)(newItemId))(v1.items);
-                  var $76 = {};
-                  for (var $77 in v1) {
-                      if ({}.hasOwnProperty.call(v1, $77)) {
-                          $76[$77] = v1[$77];
+                  var $78 = {};
+                  for (var $79 in v1) {
+                      if ({}.hasOwnProperty.call(v1, $79)) {
+                          $78[$79] = v1[$79];
                       };
                   };
-                  $76.items = items$prime;
-                  $76.items_order = items_order$prime;
-                  $76.m_backup = Data_Maybe.Nothing.value;
-                  return $76;
+                  $78.items = items$prime;
+                  $78.items_order = items_order$prime;
+                  $78.m_backup = Data_Maybe.Nothing.value;
+                  return $78;
               };
               return Control_Bind.discard(Control_Bind.discardUnit)(Halogen_Query_HalogenM.bindHalogenM)(Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(addItem))(function () {
                   return updateLocalStorage;
+              });
+          };
+          if (v instanceof DeleteItem) {
+              return Control_Bind.discard(Control_Bind.discardUnit)(Halogen_Query_HalogenM.bindHalogenM)(handleAction(new DeselectItem(v.value0)))(function () {
+                  return Control_Bind.discard(Control_Bind.discardUnit)(Halogen_Query_HalogenM.bindHalogenM)(Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (s) {
+                      var $83 = {};
+                      for (var $84 in s) {
+                          if ({}.hasOwnProperty.call(s, $84)) {
+                              $83[$84] = s[$84];
+                          };
+                      };
+                      $83.items = Data_Map_Internal["delete"](Data_Ord.ordInt)(v.value0)(s.items);
+                      $83.items_order = Data_Array["delete"](Data_Eq.eqInt)(v.value0)(s.items_order);
+                      return $83;
+                  }))(function () {
+                      return updateLocalStorage;
+                  });
               });
           };
           if (v instanceof DeleteAllItems) {
@@ -9651,7 +9689,7 @@ var PS = {};
                           return updateLocalStorage;
                       });
                   };
-                  throw new Error("Failed pattern match at Main (line 231, column 7 - line 235, column 29): " + [ v1.m_backup.constructor.name ]);
+                  throw new Error("Failed pattern match at Main (line 239, column 7 - line 243, column 29): " + [ v1.m_backup.constructor.name ]);
               });
           };
           if (v instanceof UpdateItem) {
@@ -9659,14 +9697,14 @@ var PS = {};
                   return Data_Map_Internal.insert(Data_Ord.ordInt)(v.value0)(v.value1)(items);
               };
               return Control_Bind.discard(Control_Bind.discardUnit)(Halogen_Query_HalogenM.bindHalogenM)(Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (s) {
-                  var $88 = {};
-                  for (var $89 in s) {
-                      if ({}.hasOwnProperty.call(s, $89)) {
-                          $88[$89] = s[$89];
+                  var $94 = {};
+                  for (var $95 in s) {
+                      if ({}.hasOwnProperty.call(s, $95)) {
+                          $94[$95] = s[$95];
                       };
                   };
-                  $88.items = updateItem(s.items);
-                  return $88;
+                  $94.items = updateItem(s.items);
+                  return $94;
               }))(function () {
                   return updateLocalStorage;
               });
@@ -9676,14 +9714,14 @@ var PS = {};
                   return Data_Map_Internal.insert(Data_Ord.ordInt)(v.value0)(v.value1)(items);
               };
               return Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (s) {
-                  var $93 = {};
-                  for (var $94 in s) {
-                      if ({}.hasOwnProperty.call(s, $94)) {
-                          $93[$94] = s[$94];
+                  var $99 = {};
+                  for (var $100 in s) {
+                      if ({}.hasOwnProperty.call(s, $100)) {
+                          $99[$100] = s[$100];
                       };
                   };
-                  $93.selectedItems = updateItem(s.selectedItems);
-                  return $93;
+                  $99.selectedItems = updateItem(s.selectedItems);
+                  return $99;
               });
           };
           if (v instanceof SelectItem) {
@@ -9695,41 +9733,41 @@ var PS = {};
                   if (v2 instanceof Data_Maybe.Nothing) {
                       return v1.selectedItems;
                   };
-                  throw new Error("Failed pattern match at Main (line 252, column 9 - line 254, column 35): " + [ v2.constructor.name ]);
+                  throw new Error("Failed pattern match at Main (line 260, column 9 - line 262, column 35): " + [ v2.constructor.name ]);
               };
               return Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (s) {
-                  var $103 = {};
-                  for (var $104 in s) {
-                      if ({}.hasOwnProperty.call(s, $104)) {
-                          $103[$104] = s[$104];
+                  var $109 = {};
+                  for (var $110 in s) {
+                      if ({}.hasOwnProperty.call(s, $110)) {
+                          $109[$110] = s[$110];
                       };
                   };
-                  $103.selectedItems = selectItem(s);
-                  return $103;
+                  $109.selectedItems = selectItem(s);
+                  return $109;
               });
           };
           if (v instanceof DeselectItem) {
               return Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (s) {
-                  var $107 = {};
-                  for (var $108 in s) {
-                      if ({}.hasOwnProperty.call(s, $108)) {
-                          $107[$108] = s[$108];
+                  var $113 = {};
+                  for (var $114 in s) {
+                      if ({}.hasOwnProperty.call(s, $114)) {
+                          $113[$114] = s[$114];
                       };
                   };
-                  $107.selectedItems = Data_Map_Internal["delete"](Data_Ord.ordInt)(v.value0)(s.selectedItems);
-                  return $107;
+                  $113.selectedItems = Data_Map_Internal["delete"](Data_Ord.ordInt)(v.value0)(s.selectedItems);
+                  return $113;
               });
           };
           if (v instanceof StartMovingItem) {
               return Control_Bind.discard(Control_Bind.discardUnit)(Halogen_Query_HalogenM.bindHalogenM)(Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (v1) {
-                  var $111 = {};
-                  for (var $112 in v1) {
-                      if ({}.hasOwnProperty.call(v1, $112)) {
-                          $111[$112] = v1[$112];
+                  var $117 = {};
+                  for (var $118 in v1) {
+                      if ({}.hasOwnProperty.call(v1, $118)) {
+                          $117[$118] = v1[$118];
                       };
                   };
-                  $111.m_movingItemIx = new Data_Maybe.Just(v.value0);
-                  return $111;
+                  $117.m_movingItemIx = new Data_Maybe.Just(v.value0);
+                  return $117;
               }))(function () {
                   return subscribeToKeys(Effect_Aff_Class.monadAffAff)(ProcessKey.create);
               });
@@ -9758,7 +9796,7 @@ var PS = {};
                                   if (m_order$prime instanceof Data_Maybe.Just) {
                                       return m_order$prime.value0;
                                   };
-                                  throw new Error("Failed pattern match at Main (line 282, column 13 - line 284, column 36): " + [ m_order$prime.constructor.name ]);
+                                  throw new Error("Failed pattern match at Main (line 290, column 13 - line 292, column 36): " + [ m_order$prime.constructor.name ]);
                               };
                           };
                       };
@@ -9769,17 +9807,17 @@ var PS = {};
                                   return v2;
                               };
                               if (v3) {
-                                  var $122 = {};
-                                  for (var $123 in v2) {
-                                      if ({}.hasOwnProperty.call(v2, $123)) {
-                                          $122[$123] = v2[$123];
+                                  var $128 = {};
+                                  for (var $129 in v2) {
+                                      if ({}.hasOwnProperty.call(v2, $129)) {
+                                          $128[$129] = v2[$129];
                                       };
                                   };
-                                  $122.items_order = swap(v1.m_movingItemIx.value0)(j)(v2.items_order);
-                                  $122.m_movingItemIx = new Data_Maybe.Just(j);
-                                  return $122;
+                                  $128.items_order = swap(v1.m_movingItemIx.value0)(j)(v2.items_order);
+                                  $128.m_movingItemIx = new Data_Maybe.Just(j);
+                                  return $128;
                               };
-                              throw new Error("Failed pattern match at Main (line 276, column 13 - line 280, column 46): " + [ v3.constructor.name ]);
+                              throw new Error("Failed pattern match at Main (line 284, column 13 - line 288, column 46): " + [ v3.constructor.name ]);
                           };
                       };
                       if (v.value1 === "ArrowUp") {
@@ -9789,27 +9827,27 @@ var PS = {};
                           return Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(moveItemTo(v1.m_movingItemIx.value0 + 1 | 0));
                       };
                       return Control_Bind.discard(Control_Bind.discardUnit)(Halogen_Query_HalogenM.bindHalogenM)(Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (v2) {
-                          var $127 = {};
-                          for (var $128 in v2) {
-                              if ({}.hasOwnProperty.call(v2, $128)) {
-                                  $127[$128] = v2[$128];
+                          var $133 = {};
+                          for (var $134 in v2) {
+                              if ({}.hasOwnProperty.call(v2, $134)) {
+                                  $133[$134] = v2[$134];
                               };
                           };
-                          $127.m_movingItemIx = Data_Maybe.Nothing.value;
-                          return $127;
+                          $133.m_movingItemIx = Data_Maybe.Nothing.value;
+                          return $133;
                       }))(function () {
                           return Control_Bind.discard(Control_Bind.discardUnit)(Halogen_Query_HalogenM.bindHalogenM)(Halogen_Query_HalogenM.unsubscribe(v.value0))(function () {
                               return updateLocalStorage;
                           });
                       });
                   };
-                  throw new Error("Failed pattern match at Main (line 264, column 7 - line 291, column 26): " + [ v1.m_movingItemIx.constructor.name ]);
+                  throw new Error("Failed pattern match at Main (line 272, column 7 - line 299, column 26): " + [ v1.m_movingItemIx.constructor.name ]);
               });
           };
           if (v instanceof ImportItemsJSONString) {
               return readItemsFromJSONString(new Data_Maybe.Just(v.value0));
           };
-          throw new Error("Failed pattern match at Main (line 201, column 18 - line 293, column 43): " + [ v.constructor.name ]);
+          throw new Error("Failed pattern match at Main (line 207, column 18 - line 301, column 43): " + [ v.constructor.name ]);
       };
       return Halogen_Component.mkComponent({
           initialState: function (v) {
@@ -9835,6 +9873,7 @@ var PS = {};
   exports["StartMovingItem"] = StartMovingItem;
   exports["ProcessKey"] = ProcessKey;
   exports["UpdateItem"] = UpdateItem;
+  exports["DeleteItem"] = DeleteItem;
   exports["DeleteAllItems"] = DeleteAllItems;
   exports["Undo"] = Undo;
   exports["SelectItem"] = SelectItem;
