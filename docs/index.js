@@ -9423,7 +9423,7 @@ var PS = {};
                   return Web_Storage_Storage.setItem("items")(jsonS)(v.m_storage.value0)();
               });
           };
-          throw new Error("Failed pattern match at Main (line 306, column 5 - line 311, column 42): " + [ v.m_storage.constructor.name ]);
+          throw new Error("Failed pattern match at Main (line 308, column 5 - line 313, column 42): " + [ v.m_storage.constructor.name ]);
       });
       var render = function (v) {
           var undoButton = Halogen_HTML_Elements.button([ Halogen_HTML_Properties.title("UNDO"), Halogen_HTML_Events.onClick(function (v1) {
@@ -9584,7 +9584,7 @@ var PS = {};
                   return $63;
               });
           };
-          throw new Error("Failed pattern match at Main (line 324, column 5 - line 327, column 69): " + [ m_items.constructor.name ]);
+          throw new Error("Failed pattern match at Main (line 326, column 5 - line 329, column 69): " + [ m_items.constructor.name ]);
       };
       var readLocalStorage = Control_Bind.bind(Halogen_Query_HalogenM.bindHalogenM)(Control_Monad_State_Class.get(Halogen_Query_HalogenM.monadStateHalogenM))(function (v) {
           if (v.m_storage instanceof Data_Maybe.Nothing) {
@@ -9595,7 +9595,7 @@ var PS = {};
                   return readItemsFromJSONString(jsonS);
               });
           };
-          throw new Error("Failed pattern match at Main (line 315, column 5 - line 320, column 38): " + [ v.m_storage.constructor.name ]);
+          throw new Error("Failed pattern match at Main (line 317, column 5 - line 322, column 38): " + [ v.m_storage.constructor.name ]);
       });
       var handleAction = function (v) {
           if (v instanceof Init) {
@@ -9647,6 +9647,10 @@ var PS = {};
                       };
                       $83.items = Data_Map_Internal["delete"](Data_Ord.ordInt)(v.value0)(s.items);
                       $83.items_order = Data_Array["delete"](Data_Eq.eqInt)(v.value0)(s.items_order);
+                      $83.m_backup = new Data_Maybe.Just({
+                          items: s.items,
+                          items_order: s.items_order
+                      });
                       return $83;
                   }))(function () {
                       return updateLocalStorage;
@@ -9689,7 +9693,7 @@ var PS = {};
                           return updateLocalStorage;
                       });
                   };
-                  throw new Error("Failed pattern match at Main (line 239, column 7 - line 243, column 29): " + [ v1.m_backup.constructor.name ]);
+                  throw new Error("Failed pattern match at Main (line 241, column 7 - line 245, column 29): " + [ v1.m_backup.constructor.name ]);
               });
           };
           if (v instanceof UpdateItem) {
@@ -9733,7 +9737,7 @@ var PS = {};
                   if (v2 instanceof Data_Maybe.Nothing) {
                       return v1.selectedItems;
                   };
-                  throw new Error("Failed pattern match at Main (line 260, column 9 - line 262, column 35): " + [ v2.constructor.name ]);
+                  throw new Error("Failed pattern match at Main (line 262, column 9 - line 264, column 35): " + [ v2.constructor.name ]);
               };
               return Control_Monad_State_Class.modify_(Halogen_Query_HalogenM.monadStateHalogenM)(function (s) {
                   var $109 = {};
@@ -9796,7 +9800,7 @@ var PS = {};
                                   if (m_order$prime instanceof Data_Maybe.Just) {
                                       return m_order$prime.value0;
                                   };
-                                  throw new Error("Failed pattern match at Main (line 290, column 13 - line 292, column 36): " + [ m_order$prime.constructor.name ]);
+                                  throw new Error("Failed pattern match at Main (line 292, column 13 - line 294, column 36): " + [ m_order$prime.constructor.name ]);
                               };
                           };
                       };
@@ -9817,7 +9821,7 @@ var PS = {};
                                   $128.m_movingItemIx = new Data_Maybe.Just(j);
                                   return $128;
                               };
-                              throw new Error("Failed pattern match at Main (line 284, column 13 - line 288, column 46): " + [ v3.constructor.name ]);
+                              throw new Error("Failed pattern match at Main (line 286, column 13 - line 290, column 46): " + [ v3.constructor.name ]);
                           };
                       };
                       if (v.value1 === "ArrowUp") {
@@ -9841,13 +9845,13 @@ var PS = {};
                           });
                       });
                   };
-                  throw new Error("Failed pattern match at Main (line 272, column 7 - line 299, column 26): " + [ v1.m_movingItemIx.constructor.name ]);
+                  throw new Error("Failed pattern match at Main (line 274, column 7 - line 301, column 26): " + [ v1.m_movingItemIx.constructor.name ]);
               });
           };
           if (v instanceof ImportItemsJSONString) {
               return readItemsFromJSONString(new Data_Maybe.Just(v.value0));
           };
-          throw new Error("Failed pattern match at Main (line 207, column 18 - line 301, column 43): " + [ v.constructor.name ]);
+          throw new Error("Failed pattern match at Main (line 207, column 18 - line 303, column 43): " + [ v.constructor.name ]);
       };
       return Halogen_Component.mkComponent({
           initialState: function (v) {

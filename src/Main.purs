@@ -225,7 +225,9 @@ component =
       handleAction $ DeselectItem itemId
       H.modify_ $ \ s-> s 
         { items       =   Map.delete itemId s.items
-        , items_order = Array.delete itemId s.items_order }
+        , items_order = Array.delete itemId s.items_order 
+        , m_backup = Just {items: s.items, items_order: s.items_order} 
+        }
       updateLocalStorage
 
     DeleteAllItems -> do
