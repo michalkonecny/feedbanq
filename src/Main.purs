@@ -77,6 +77,7 @@ data Action
   | SelectItem ItemId
   | DeselectItem ItemId
   | UpdateSelected ItemId String
+  | ImportItemsJSONString String
 
 
 component :: forall output input query. H.Component query input output Aff
@@ -117,14 +118,16 @@ component =
           result
         ]
 
-    importExportView = 
-      HH.div_ [
-        HH.text "Export all feedback items as JSON: ",
-        HH.textarea 
-          [ HP.value json ]
-      ]
-      where
-      json = stringify $ encodeJson {items, items_order}
+    importExportView 
+      | not (Map.isEmpty selectedItems) = HH.div_ []
+      | otherwise =
+        HH.div_ [
+          HH.text "Export/import all feedback items as JSON: ",
+          HH.textarea 
+            [ HP.value json, HE.onValueInput ImportItemsJSONString ]
+        ]
+        where
+        json = stringify $ encodeJson {items, items_order}
 
     numberOfItems = Array.length items_order
     result = HH.textarea 
@@ -286,6 +289,8 @@ component =
               order1 <- Array.updateAt i item_j order
               order2 <- Array.updateAt j item_i order1
               pure order2
+    ImportItemsJSONString jsonS -> 
+      readItemsFromJSONString (Just jsonS)
 
   updateLocalStorage = do
     {m_storage, items, items_order} <- H.get
@@ -303,18 +308,21 @@ component =
       Nothing -> pure unit
       Just storage -> do
         -- attempt to get history from local storage:
-        m_itemsS <- liftEffect $ Storage.getItem "items" storage
-        let m_items = parseItems m_itemsS
-        case m_items of
-          Nothing -> pure unit
-          Just {items: items', items_order: items_order'} ->
-            H.modify_ $ _ { items = items', items_order = items_order' }
-        where
-        parseItems :: Maybe String -> Maybe StoredState
-        parseItems m_itemsS = do
-          itemsS <- m_itemsS
-          json   <- hush $ parseJson itemsS
-          hush $ decodeJson json
+        jsonS <- liftEffect $ Storage.getItem "items" storage
+        readItemsFromJSONString jsonS
+
+  readItemsFromJSONString jsonS = do
+    let m_items = parseItems jsonS
+    case m_items of
+      Nothing -> pure unit
+      Just {items: items', items_order: items_order'} ->
+        H.modify_ $ _ { items = items', items_order = items_order' }
+    where
+    parseItems :: Maybe String -> Maybe StoredState
+    parseItems m_itemsS = do
+      itemsS <- m_itemsS
+      json   <- hush $ parseJson itemsS
+      hush $ decodeJson json
 
 subscribeToKeys :: 
   forall m output slots action state. MonadAff m => 
